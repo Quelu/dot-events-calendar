@@ -1,7 +1,7 @@
 {
-  "name": "events-calendar",
+  "name": "dot-events-calendar",
   "description": "Monthly calendar with events",
-  "main": "events-calendar.html",
+  "main": "dot-events-calendar.html",
   "dependencies": {
     "polymer": "Polymer/polymer#^2.0.0",
     "iron-icons": "PolymerElements/iron-icons#^2.0.1",

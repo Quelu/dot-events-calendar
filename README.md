@@ -1,4 +1,4 @@
-# \<events-calendar\>
+# \<dot-events-calendar\>
 
 Monthly calendar with events based on https://github.com/Hispar/events-calendar
 

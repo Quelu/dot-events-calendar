@@ -3,9 +3,9 @@
 <link rel="import" href="../iron-flex-layout/iron-flex-layout.html">
 <script src="../moment/min/moment.min.js"></script>
 
-<link rel="import" href="./events-calendar-day.html">
+<link rel="import" href="./dot-events-calendar-day.html">
 
-<dom-module id="events-calendar">
+<dom-module id="dot-events-calendar">
   <template>
     <style>
        :host {
@@ -54,19 +54,19 @@
 
   <script>
     /**
-     * `events-calendar`
+     * `dot-events-calendar`
      *
      * @summary Monthly calendar with events.
      * @customElement
      * @polymer
      * @extends {Polymer.Element}
      */
-    class EventsCalendar extends Polymer.Element {
+    class DotEventsCalendar extends Polymer.Element {
       /**
        * String providing the tag name to register the element under.
        */
       static get is() {
-        return 'events-calendar';
+        return 'dot-events-calendar';
       }
 
       /**
@@ -196,7 +196,7 @@
        * @private
        */
       _handlerChosen(e) {
-        let selection = this.$.calendarContent.querySelector('events-calendar-day[selected]');
+        let selection = this.$.calendarContent.querySelector('dot-events-calendar-day[selected]');
         if (selection) {
           selection.selected = false;
         }
@@ -205,7 +205,7 @@
         } else {
           this.chosen = e;
 
-          let days = this.$.calendarContent.querySelectorAll('events-calendar-day');
+          let days = this.$.calendarContent.querySelectorAll('dot-events-calendar-day');
 
           days.forEach((e, i) => {
             if (this.chosen == e.getAttribute('data-date')) {
@@ -386,7 +386,7 @@
             week.setAttribute('week', i / 7);
           }
 
-          let day = document.createElement('events-calendar-day');
+          let day = document.createElement('dot-events-calendar-day');
           day.classList.add('calendar__item');
 
           if (i < (dayOfMonthStart - this.firstDayOfWeek)) {
@@ -445,7 +445,7 @@
       };
     }
 
-    window.customElements.define(EventsCalendar.is, EventsCalendar);
+    window.customElements.define(DotEventsCalendar.is, DotEventsCalendar);
 
   </script>
 </dom-module>

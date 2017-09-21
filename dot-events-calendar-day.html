@@ -1,6 +1,6 @@
 <link rel="import" href="../polymer/polymer-element.html">
 
-<dom-module id="events-calendar-day">
+<dom-module id="dot-events-calendar-day">
   <template>
     <style>
       :host {
@@ -20,19 +20,19 @@
 
   <script>
     /**
-     * `events-calendar-day`
+     * `dot-events-calendar-day`
      *
      * @summary Day component of events-calendar.
      * @customElement
      * @polymer
      * @extends {Polymer.Element}
      */
-    class EventsCalendarDay extends Polymer.Element {
+    class DotEventsCalendarDay extends Polymer.Element {
       /**
        * String providing the tag name to register the element under.
        */
       static get is() {
-        return 'events-calendar-day';
+        return 'dot-events-calendar-day';
       }
 
       /**
@@ -42,6 +42,7 @@
         return {
           /**
            * Is the selected day
+           
            */
           selected: {
             type: Boolean,
@@ -153,7 +154,7 @@
 
     }
 
-    window.customElements.define(EventsCalendarDay.is, EventsCalendarDay);
+    window.customElements.define(DotEventsCalendarDay.is, DotEventsCalendarDay);
 
   </script>
 </dom-module>
