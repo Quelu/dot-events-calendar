@@ -1,0 +1,451 @@
+<link rel="import" href="../polymer/polymer-element.html">
+<link rel="import" href="../iron-icons/iron-icons.html">
+<link rel="import" href="../iron-flex-layout/iron-flex-layout.html">
+<script src="../moment/min/moment.min.js"></script>
+
+<link rel="import" href="./events-calendar-day.html">
+
+<dom-module id="events-calendar">
+  <template>
+    <style>
+       :host {
+        display: block;
+      }
+
+      .calendar__header {
+        @apply --layout-horizontal;
+        @apply --layout-justified;
+      }
+
+      .calendar__row {
+        @apply --layout-horizontal;
+        @apply --layout-around-justified;
+      }
+
+      .calendar__item {
+        @apply --layout-flex;
+        text-align: center;
+      }
+
+      .calendar__item--prevMonth,
+      .calendar__item--nextMonth {
+        background-color: #DDDDDD;
+      }
+
+      .selected {
+        background-color: #666666;
+        color: white;
+      }
+
+      iron-icon {
+        cursor: pointer;
+      }
+
+    </style>
+    <div id="calendar" class="calendar">
+      <div class="calendar__header">
+        <iron-icon id="prevMonth" class="button" on-click="prevMonthHandler" icon="chevron-left"></iron-icon>
+        <p>{{currentMonth}} {{showDate.year}}</p>
+        <iron-icon id="nextMonth" class="button" on-click="nextMonthHandler" icon="chevron-right"></iron-icon>
+      </div>
+      <div class="calendar__content" id="calendarContent"></div>
+    </div>
+  </template>
+
+  <script>
+    /**
+     * `events-calendar`
+     *
+     * @summary Monthly calendar with events.
+     * @customElement
+     * @polymer
+     * @extends {Polymer.Element}
+     */
+    class EventsCalendar extends Polymer.Element {
+      /**
+       * String providing the tag name to register the element under.
+       */
+      static get is() {
+        return 'events-calendar';
+      }
+
+      /**
+       * Object describing property-related metadata used by Polymer features
+       */
+      static get properties() {
+        return {
+          /**
+           * Selected day, format set to 'YYYY-MM-DD'
+           */
+          chosen: {
+            type: Object,
+            reflectToAttribute: true,
+            observer: "_handlerChosen"
+          },
+          /**
+           * Set the first day of the week: Sunday is 0, Monday is 1, etc.
+           */
+          firstDayOfWeek: {
+            type: Number,
+            value: 0
+          },
+          /**
+           * This property can be used to localize the elements day labels. Do not change the order
+           */
+          dayLabels: {
+            type: Array,
+            value: function () {
+              return ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+            }
+          },
+          /**
+           * This property can be used to localize the elements month labels.
+           */
+          monthLabels: {
+            type: Array,
+            value: function () {
+              return ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September',
+                'October', 'November', 'December'
+              ];
+            }
+          },
+          /**
+           * Internal property that holds the current month and year displayed.
+           */
+          showDate: {
+            type: Object,
+            value: function () {
+              return {
+                year: 0,
+                month: 1,
+                day: 1
+              };
+            },
+            readOnly: true
+          },
+          /**
+           * The currently selected date.
+           */
+          date: {
+            type: Object,
+            value: function () {
+              var d = new Date();
+              return {
+                year: d.getFullYear(),
+                month: d.getMonth() + 1,
+                day: null,
+                date: d
+              }
+            },
+            observer: '_dateChanged'
+          },
+          /**
+           * Events list by day
+           */
+          eventList: {
+            type: Object,
+            value: {},
+            observer: '_onEventListChange'
+          },
+
+          /**
+           * Current month string as locale
+           */
+          currentMonth: String
+        };
+      }
+
+      /**
+       * Use for one-time configuration of your component after local DOM is initialized. 
+       */
+      ready() {
+        super.ready();
+        this._makeCalendar(this.showDate.year, this.showDate.month);
+      }
+
+      /**
+       *   The `dateSelected` event fired when a date is selected
+       *   @event dateSelected
+       *   @detail {year: String, month: String, day: String, date: String, iso: String}
+       **/
+
+      /**   The `prevMonth` events fired when next month is clicked
+       *   @event prevMonth
+       *   @detail
+       **/
+
+      /**   The `nextMonth` events fired when next month is clicked
+       *   @event nextMonth
+       *   @detail
+       **/
+
+      /**
+       * Occurs when the event list change
+       * @method
+       * @private
+       */
+      _onEventListChange(value) {
+        if (value) {
+          this._makeCalendar(this.showDate.year, this.showDate.month);
+        }
+      }
+
+      /**
+       * Handle the selected day
+       * @method
+       * @private
+       */
+      _handlerChosen(e) {
+        let selection = this.$.calendarContent.querySelector('events-calendar-day[selected]');
+        if (selection) {
+          selection.selected = false;
+        }
+        if (e == "" || e == null) {
+          this.chosen = "";
+        } else {
+          this.chosen = e;
+
+          let days = this.$.calendarContent.querySelectorAll('events-calendar-day');
+
+          days.forEach((e, i) => {
+            if (this.chosen == e.getAttribute('data-date')) {
+              e.selected = true;
+            }
+          });
+        }
+      }
+
+      /**
+       * Switch to the right calendar page, based on the set date.
+       * @method
+       * @private
+       */
+      _dateChanged(newDate, oldDate) {
+        var date = new Date();
+        var month = parseInt(newDate.month) || 1;
+        var year = parseInt(newDate.year) || date.getFullYear();
+        var day = parseInt(newDate.day) || 1;
+
+        this.date.month = month;
+        this.date.year = year;
+        this.date.day = this.date.day != null ? day : null;
+
+        this._setShowDate({
+          month: month - 1,
+          year: year
+        });
+
+        this.currentMonth = this.monthLabels[this.showDate.month];
+
+        if (oldDate !== undefined) {
+          if (this.showDate.month !== oldDate.month) {
+            this._makeCalendar(this.showDate.year, this.showDate.month);
+          }
+        }
+
+        this.dispatchEvent(new CustomEvent('date-selected', {
+          detail: {
+            date: this.date
+          }
+        }));
+
+        if (!!newDate && !!oldDate) {
+          if (newDate.date.getMonth() > oldDate.date.getMonth()) {
+            this.dispatchEvent(new CustomEvent('next-month'));
+            this._makeCalendar(this.showDate.year, this.showDate.month);
+          }
+          if (newDate.date.getMonth() < oldDate.date.getMonth()) {
+            this.dispatchEvent(new CustomEvent('prev-month'));
+            this._makeCalendar(this.showDate.year, this.showDate.month);
+          }
+        }
+      }
+
+
+      /**
+       * Move to the previous month.
+       * @method
+       */
+      prevMonthHandler() {
+        this.set('showDate.month', this.showDate.month <= 0 ? 11 : this.showDate.month - 1);
+        this.set('showDate.year', this.showDate.month == 11 ? this.showDate.year - 1 : this.showDate.year);
+        this.chosen = "";
+
+        this.notifyPath('date.year', this.showDate.year);
+
+        this.currentMonth = this.monthLabels[this.showDate.month];
+        this._makeCalendar(this.showDate.year, this.showDate.month);
+        this.dispatchEvent(new CustomEvent('prev-month'));
+      }
+
+      /**
+       * Move to the next month.
+       * @method
+       */
+      nextMonthHandler() {
+        this.set('showDate.month', this.showDate.month == 11 ? 0 : this.showDate.month + 1);
+        this.set('showDate.year', this.showDate.month <= 0 ? this.showDate.year + 1 : this.showDate.year);
+        this.chosen = "";
+
+        this.notifyPath('date.year', this.showDate.year);
+
+        this.currentMonth = this.monthLabels[this.showDate.month];
+        this._makeCalendar(this.showDate.year, this.showDate.month);
+        this.dispatchEvent(new CustomEvent('next-month'));
+      }
+
+      /**
+       * Set the calendar to the today date.
+       * @method
+       */
+      goToCurrentDate() {
+        var today = new Date();
+
+        this.date = {
+          date: today,
+          day: today.getDate(),
+          month: today.getMonth() + 1,
+          year: today.getFullYear()
+        };
+
+        this._makeCalendar(this.showDate.year, this.showDate.month);
+      }
+
+      /**
+       * Make the calendar
+       * @method
+       * @private
+       */
+      _makeCalendar(year, month) {
+        const today = new Date();
+        const thisDay = today.getDate();
+        const thisMonth = today.getMonth() + 1;
+        const thisYear = today.getFullYear();
+
+        let dayOfMonthStart = new Date(year, month, 1).getDay(); // which day the month starts (0 - 6)
+        dayOfMonthStart = (dayOfMonthStart === 0) ? 7 : dayOfMonthStart;
+
+        let previousMonth = month - 1;
+        let nextMonth = month + 1;
+        let previousYear = year - 1
+        let nextYear = year + 1;
+
+        // Fix the year and the month
+        if (month === 0) {
+          previousMonth = 11;
+          previousYear = year - 1;
+        } else if (month === 11) {
+          nextMonth = 0;
+          nextYear = year + 1;
+        }
+
+        // CONTENT
+        let calendarContent = this.$.calendarContent;
+        calendarContent.innerHTML = '';
+
+        // WEEK DAY LABEL
+        let labels = document.createElement('div');
+        labels.classList.add('calendar__row');
+        const labelsList = this.dayLabels;
+
+        for (let i = 0; i < labelsList.length; i++) {
+          let label = document.createElement('div');
+          label.classList.add('calendar__item');
+          // Get the first day based on firstDay property
+          const dayName = (i + this.firstDayOfWeek) % 7;
+
+          label.innerHTML = labelsList[dayName];
+          labels.appendChild(label);
+        }
+        calendarContent.appendChild(labels);
+
+        let previousMonthDays;
+        if (month === 0) {
+          previousMonthDays = this._numberOfDays(year, 12);
+        } else {
+          previousMonthDays = this._numberOfDays(year, month);
+        }
+        const currentMonthDays = this._numberOfDays(year, month + 1);
+        const nextMonthDays = this._numberOfDays(year, month + 2);
+
+        // Define default day variables
+        let dayN = 1;
+        let dayOfNextMonth = 1;
+
+        let days = document.createElement('div');
+        days.classList.add('calendar__content')
+        let week = document.createElement('div');
+
+        let i = 0;
+        // While the last week of the month is not completed (include the next month days)
+        while (i % 7 !== 0 || dayN <= currentMonthDays) {
+          // Separate into weeks
+          if (i % 7 === 0) {
+            week = document.createElement('div');
+            week.classList.add('calendar__row');
+            week.setAttribute('week', i / 7);
+          }
+
+          let day = document.createElement('events-calendar-day');
+          day.classList.add('calendar__item');
+
+          if (i < (dayOfMonthStart - this.firstDayOfWeek)) {
+            day.classList.add('calendar__item--prevMonth');
+            day.disabled = true;
+            day.date = moment()
+              .year(previousYear)
+              .month(previousMonth)
+              .date((previousMonthDays - dayOfMonthStart) + (i + 1 + this.firstDayOfWeek))
+              .format();
+          } else if (dayN <= currentMonthDays) {
+            day.classList.add('calendar__item--currMonth');
+            day.date = moment()
+              .year(year)
+              .month(month)
+              .date(dayN++)
+              .format();
+
+            // If today
+            if ((dayN - 1) == thisDay && month == thisMonth - 1 && thisYear == year) {
+              day.classList.add('calendar__item--today');
+            }
+            // If selected
+            if ((dayN - 1) == this.date.day && month == this.date.month - 1 && year == this.date.year) {
+              day.selected = true;
+            }
+          } else {
+            day.classList.add('calendar__item--nextMonth');
+            day.disabled = true;
+            day.date = moment()
+              .year(nextYear)
+              .month(nextMonth)
+              .date(dayOfNextMonth++)
+              .format();
+          }
+
+          week.appendChild(day);
+          days.appendChild(week);
+          if (this.eventList[day.formattedDate] !== undefined) {
+            day.eventList = this.eventList[day.formattedDate];
+          }
+
+          i++;
+        }
+        calendarContent.appendChild(days);
+      };
+
+      /**
+       * Get day number for given month
+       * The month passed in is 1 for January, 2 for February and so on
+       * @method
+       * @private
+       */
+      _numberOfDays(year, month) {
+        return new Date(year, month, 0).getDate();
+      };
+    }
+
+    window.customElements.define(EventsCalendar.is, EventsCalendar);
+
+  </script>
+</dom-module>

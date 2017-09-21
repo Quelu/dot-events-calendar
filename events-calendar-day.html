@@ -1,0 +1,159 @@
+<link rel="import" href="../polymer/polymer-element.html">
+
+<dom-module id="events-calendar-day">
+  <template>
+    <style>
+      :host {
+        display: block
+      }
+
+    </style>
+
+    <p>
+      {{ day }}
+      <template is="dom-repeat" items="{{eventList}}" as="event">
+        
+      </template>
+    </p>
+
+  </template>
+
+  <script>
+    /**
+     * `events-calendar-day`
+     *
+     * @summary Day component of events-calendar.
+     * @customElement
+     * @polymer
+     * @extends {Polymer.Element}
+     */
+    class EventsCalendarDay extends Polymer.Element {
+      /**
+       * String providing the tag name to register the element under.
+       */
+      static get is() {
+        return 'events-calendar-day';
+      }
+
+      /**
+       * Object describing property-related metadata used by Polymer features
+       */
+      static get properties() {
+        return {
+          /**
+           * Is the selected day
+           */
+          selected: {
+            type: Boolean,
+            value: false
+          },
+
+          /**
+           * Events list by day
+           */
+          eventList: {
+            type: Array,
+            value: []
+          },
+
+          /**
+           * The current date.
+           */
+          date: {
+            type: String,
+            value: function () {
+              return moment().format();
+            },
+            reflectToAttribute: true
+          },
+
+          /**
+           * Formatted date.
+           */
+          formattedDate: {
+            type: String,
+            computed: '_getFormattedDate(date)'
+          },
+
+          year: {
+            type: String,
+            computed: '_getYear(date)'
+          },
+          day: {
+            type: String,
+            computed: '_getDay(date)'
+          },
+
+          disabled: {
+            type: Boolean,
+            value: false,
+            reflectToAttribute: true
+          }
+        };
+      }
+
+      /**
+       * Instance of the element is created/upgraded. Use: initializing state,
+       * set up event listeners, create shadow dom.
+       * @constructor
+       */
+      constructor() {
+        super();
+      }
+
+      ready() {
+        super.ready();
+
+        Polymer.RenderStatus.afterNextRender(this, function () {
+          this.addEventListener('tap', this._onDayClicked.bind(this));
+        });
+      }
+
+      _onDayClicked() {
+        this.fire('date-selected', {
+          date: this.date
+        });
+      }
+
+      _getFormattedDate(date) {
+        date = moment(date);
+        return date.format('YYYY-MM-DD');
+      }
+
+      _getYear(date) {
+        date = moment(date);
+        return date.format('YYYY');
+      }
+
+      _getDay(date) {
+        date = moment(date);
+        return date.format('DD');
+      }
+
+      _getAssigned(item) {
+        if (item.name === '') {
+          return 'pending';
+        }
+        return 'assigned';
+      }
+
+      _hasCounter(eventList) {
+        if (!this.open && eventList.length > 0) {
+          return true;
+        }
+        return false;
+      }
+
+      _getCounter(eventList) {
+        if (!this.open && eventList.length > 0) {
+          return eventList.length;
+        }
+        return "";
+      }
+
+    }
+
+    window.customElements.define(EventsCalendarDay.is, EventsCalendarDay);
+
+  </script>
+</dom-module>
