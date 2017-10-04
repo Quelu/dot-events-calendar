@@ -1,30 +1,64 @@
 <!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, minimum-scale=1, initial-scale=1, user-scalable=yes">
 
-    <title>dot-events-calendar demo</title>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, minimum-scale=1, initial-scale=1, user-scalable=yes">
 
-    <script src="../../webcomponentsjs/webcomponents-lite.js"></script>
+  <title>dot-events-calendar demo</title>
 
-    <link rel="import" href="../../iron-demo-helpers/demo-pages-shared-styles.html">
-    <link rel="import" href="../../iron-demo-helpers/demo-snippet.html">
-    <link rel="import" href="../dot-events-calendar.html">
+  <script src="../../webcomponentsjs/webcomponents-lite.js"></script>
 
-    <custom-style>
-      <style is="custom-style" include="demo-pages-shared-styles">
-      </style>
-    </custom-style>
-  </head>
-  <body>
-    <div class="vertical-section-container centered">
-      <h3>Basic dot-events-calendar demo</h3>
-      <demo-snippet>
-        <template>
-          <dot-events-calendar first-day-of-week="1"></dot-events-calendar>
-        </template>
-      </demo-snippet>
-    </div>
-  </body>
+  <link rel="import" href="../../iron-demo-helpers/demo-pages-shared-styles.html">
+  <link rel="import" href="../../iron-demo-helpers/demo-snippet.html">
+  <link rel="import" href="../dot-events-calendar.html">
+
+  <custom-style>
+    <style is="custom-style" include="demo-pages-shared-styles">
+    </style>
+  </custom-style>
+</head>
+
+<body>
+  <div class="vertical-section-container centered">
+    <h3>Basic dot-events-calendar demo</h3>
+    <demo-snippet>
+      <template>
+        <dot-events-calendar first-day-of-week="1" id="calendar"></dot-events-calendar>
+      </template>
+      <script type="text/javascript">
+        var calendar = document.getElementById('calendar');
+        calendar.eventList = {
+          '2017-10-01': [{
+              slot: '7:00-11:00',
+              name: 'test',
+              category: 'Supervisor'
+            },
+            {
+              slot: '11:00-15:00',
+              name: 'event',
+              category: 'Supervisor'
+            }
+          ],
+          '2017-10-15': [{
+            slot: '18:00',
+            name: 'Take the children',
+            category: 'Reminder'
+          }],
+          '2017-10-20': [{
+            slot: '7:00-11:00',
+            name: 'Test2',
+            category: 'Supervisor'
+          }],
+          '2017-11-07': [{
+            slot: '7:00-11:00',
+            name: 'Test3',
+            category: 'Supervisor'
+          }]
+        }
+      </script>
+    </demo-snippet>
+  </div>
+</body>
+
 </html>

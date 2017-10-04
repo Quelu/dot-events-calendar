@@ -7,12 +7,26 @@
         display: block
       }
 
+      .list {
+        text-align: center;
+      }
+
+      .circle {
+        display: inline-block;
+        width: 5px;
+        height: 5px;
+        border-radius: 50%;
+        margin: 1px;
+        background-color: red;
+      }
     </style>
 
     <p>
       {{ day }}
+      <div class="list">
+      </div>
       <template is="dom-repeat" items="{{eventList}}" as="event">
-        
+          <span class="circle"></span>
       </template>
     </p>
 
@@ -73,16 +87,16 @@
            */
           formattedDate: {
             type: String,
-            computed: '_getFormattedDate(date)'
+            computed: 'computeFormattedDate(date)'
           },
 
           year: {
             type: String,
-            computed: '_getYear(date)'
+            computed: '_computeYear(date)'
           },
           day: {
             type: String,
-            computed: '_getDay(date)'
+            computed: '_computeDay(date)'
           },
 
           disabled: {
@@ -116,19 +130,16 @@
         });
       }
 
-      _getFormattedDate(date) {
-        date = moment(date);
-        return date.format('YYYY-MM-DD');
+      computeFormattedDate(date) {
+        return moment(date).format('YYYY-MM-DD');
       }
 
-      _getYear(date) {
-        date = moment(date);
-        return date.format('YYYY');
+      _computeYear(date) {
+        return moment(date).format('YYYY');
       }
 
-      _getDay(date) {
-        date = moment(date);
-        return date.format('DD');
+      _computeDay(date) {
+        return moment(date).format('DD');
       }
 
       _getAssigned(item) {

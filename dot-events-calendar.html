@@ -45,7 +45,7 @@
     <div id="calendar" class="calendar">
       <div class="calendar__header">
         <iron-icon id="prevMonth" class="button" on-click="prevMonthHandler" icon="chevron-left"></iron-icon>
-        <p>{{currentMonth}} {{showDate.year}}</p>
+        <span>{{currentMonth}} {{showDate.year}}</span>
         <iron-icon id="nextMonth" class="button" on-click="nextMonthHandler" icon="chevron-right"></iron-icon>
       </div>
       <div class="calendar__content" id="calendarContent"></div>
@@ -156,14 +156,6 @@
       }
 
       /**
-       * Use for one-time configuration of your component after local DOM is initialized. 
-       */
-      ready() {
-        super.ready();
-        this._makeCalendar(this.showDate.year, this.showDate.month);
-      }
-
-      /**
        *   The `dateSelected` event fired when a date is selected
        *   @event dateSelected
        *   @detail {year: String, month: String, day: String, date: String, iso: String}
@@ -185,7 +177,7 @@
        * @private
        */
       _onEventListChange(value) {
-        if (value) {
+        if (Object.keys(value).length) {
           this._makeCalendar(this.showDate.year, this.showDate.month);
         }
       }
@@ -422,12 +414,15 @@
               .date(dayOfNextMonth++)
               .format();
           }
+          // Use the function because computed are not initialized yet (not rendered)
+          let formattedDate = day.computeFormattedDate(day.date);
 
-          week.appendChild(day);
-          days.appendChild(week);
-          if (this.eventList[day.formattedDate] !== undefined) {
-            day.eventList = this.eventList[day.formattedDate];
+          if (this.eventList[formattedDate] !== undefined) {
+            day.eventList = this.eventList[formattedDate];
           }
+
+          days.appendChild(week);
+          week.appendChild(day);
 
           i++;
         }
