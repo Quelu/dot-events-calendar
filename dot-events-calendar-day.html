@@ -68,7 +68,8 @@
            */
           eventList: {
             type: Array,
-            value: []
+            value: [],
+            reflectToAttribute: true
           },
 
           /**
@@ -87,13 +88,14 @@
            */
           formattedDate: {
             type: String,
-            computed: 'computeFormattedDate(date)'
+            computed: '_computeFormattedDate(date)'
           },
 
           year: {
             type: String,
             computed: '_computeYear(date)'
           },
+
           day: {
             type: String,
             computed: '_computeDay(date)'
@@ -130,7 +132,7 @@
         });
       }
 
-      computeFormattedDate(date) {
+      _computeFormattedDate(date) {
         return moment(date).format('YYYY-MM-DD');
       }
 

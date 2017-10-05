@@ -48,7 +48,25 @@
         <span>{{currentMonth}} {{showDate.year}}</span>
         <iron-icon id="nextMonth" class="button" on-click="nextMonthHandler" icon="chevron-right"></iron-icon>
       </div>
-      <div class="calendar__content" id="calendarContent"></div>
+      <div class="calendar__content" id="calendarContent">
+        <div class="calendar__row">
+          <template is="dom-repeat" items="{{dayLabels}}" as="dayLabel">
+            <div class="calendar__item">[[_dayLabelOrdered(index)]]</div>
+          </template>
+        </div>
+        <template is="dom-repeat" items="[[_calendar]]" as="week">
+          <div class="calendar__row">
+            <template is="dom-repeat" items="{{week}}" as="day">
+              <dot-events-calendar-day 
+                date="{{day.date}}"
+                disabled="{{day.disabled}}"
+                event-list="{{eventList[day.formattedDate]}}"
+                class="calendar__item">
+              </dot-events-calendar-day>
+            </template>
+          </div>
+        </template>
+      </div>
     </div>
   </template>
 
@@ -115,13 +133,15 @@
           showDate: {
             type: Object,
             value: function () {
+              var d = new Date();
               return {
-                year: 0,
-                month: 1,
-                day: 1
-              };
+                year: d.getFullYear(),
+                month: d.getMonth() + 1,
+                day: null,
+                date: d
+              }
             },
-            readOnly: true
+            readonly: true
           },
           /**
            * The currently selected date.
@@ -145,9 +165,14 @@
           eventList: {
             type: Object,
             value: {},
+            notify: true,
             observer: '_onEventListChange'
           },
 
+          _calendar: {
+            type: Array,
+            computed: '_computeCalendar(showDate)'
+          },
           /**
            * Current month string as locale
            */
@@ -178,9 +203,14 @@
        */
       _onEventListChange(value) {
         if (Object.keys(value).length) {
-          this._makeCalendar(this.showDate.year, this.showDate.month);
+          // TODO Update the event-list attribute 
         }
       }
+
+      _makeCalendar({
+        s,
+        z
+      }) {}
 
       /**
        * Handle the selected day
@@ -222,18 +252,12 @@
         this.date.year = year;
         this.date.day = this.date.day != null ? day : null;
 
-        this._setShowDate({
+        this.showDate = {
           month: month - 1,
           year: year
-        });
+        };
 
         this.currentMonth = this.monthLabels[this.showDate.month];
-
-        if (oldDate !== undefined) {
-          if (this.showDate.month !== oldDate.month) {
-            this._makeCalendar(this.showDate.year, this.showDate.month);
-          }
-        }
 
         this.dispatchEvent(new CustomEvent('date-selected', {
           detail: {
@@ -244,11 +268,9 @@
         if (!!newDate && !!oldDate) {
           if (newDate.date.getMonth() > oldDate.date.getMonth()) {
             this.dispatchEvent(new CustomEvent('next-month'));
-            this._makeCalendar(this.showDate.year, this.showDate.month);
           }
           if (newDate.date.getMonth() < oldDate.date.getMonth()) {
             this.dispatchEvent(new CustomEvent('prev-month'));
-            this._makeCalendar(this.showDate.year, this.showDate.month);
           }
         }
       }
@@ -259,14 +281,14 @@
        * @method
        */
       prevMonthHandler() {
-        this.set('showDate.month', this.showDate.month <= 0 ? 11 : this.showDate.month - 1);
-        this.set('showDate.year', this.showDate.month == 11 ? this.showDate.year - 1 : this.showDate.year);
+        this.showDate = {
+          month: this.showDate.month == 0 ? 11 : this.showDate.month - 1,
+          year: this.showDate.month == 0 ? this.showDate.year - 1 : this.showDate.year
+        };
+
         this.chosen = "";
 
-        this.notifyPath('date.year', this.showDate.year);
-
         this.currentMonth = this.monthLabels[this.showDate.month];
-        this._makeCalendar(this.showDate.year, this.showDate.month);
         this.dispatchEvent(new CustomEvent('prev-month'));
       }
 
@@ -275,14 +297,14 @@
        * @method
        */
       nextMonthHandler() {
-        this.set('showDate.month', this.showDate.month == 11 ? 0 : this.showDate.month + 1);
-        this.set('showDate.year', this.showDate.month <= 0 ? this.showDate.year + 1 : this.showDate.year);
+        this.showDate = {
+          month: this.showDate.month == 11 ? 0 : this.showDate.month + 1,
+          year: this.showDate.month == 11 ? this.showDate.year + 1 : this.showDate.year
+        };
+
         this.chosen = "";
 
-        this.notifyPath('date.year', this.showDate.year);
-
         this.currentMonth = this.monthLabels[this.showDate.month];
-        this._makeCalendar(this.showDate.year, this.showDate.month);
         this.dispatchEvent(new CustomEvent('next-month'));
       }
 
@@ -304,11 +326,14 @@
       }
 
       /**
-       * Make the calendar
+       * Compute the current month calendar days
        * @method
        * @private
        */
-      _makeCalendar(year, month) {
+      _computeCalendar({
+        year,
+        month
+      }) {
         const today = new Date();
         const thisDay = today.getDate();
         const thisMonth = today.getMonth() + 1;
@@ -319,37 +344,17 @@
 
         let previousMonth = month - 1;
         let nextMonth = month + 1;
-        let previousYear = year - 1
-        let nextYear = year + 1;
+        let previousMonthYear = year;
+        let nextMonthYear = year;
 
         // Fix the year and the month
         if (month === 0) {
           previousMonth = 11;
-          previousYear = year - 1;
+          previousMonthYear--;
         } else if (month === 11) {
           nextMonth = 0;
-          nextYear = year + 1;
+          nextMonthYear++;
         }
-
-        // CONTENT
-        let calendarContent = this.$.calendarContent;
-        calendarContent.innerHTML = '';
-
-        // WEEK DAY LABEL
-        let labels = document.createElement('div');
-        labels.classList.add('calendar__row');
-        const labelsList = this.dayLabels;
-
-        for (let i = 0; i < labelsList.length; i++) {
-          let label = document.createElement('div');
-          label.classList.add('calendar__item');
-          // Get the first day based on firstDay property
-          const dayName = (i + this.firstDayOfWeek) % 7;
-
-          label.innerHTML = labelsList[dayName];
-          labels.appendChild(label);
-        }
-        calendarContent.appendChild(labels);
 
         let previousMonthDays;
         if (month === 0) {
@@ -357,77 +362,57 @@
         } else {
           previousMonthDays = this._numberOfDays(year, month);
         }
-        const currentMonthDays = this._numberOfDays(year, month + 1);
-        const nextMonthDays = this._numberOfDays(year, month + 2);
+        let currentMonthDays = this._numberOfDays(year, month + 1);
 
         // Define default day variables
+        let i = 0;
         let dayN = 1;
         let dayOfNextMonth = 1;
+        let mWeeks = [];
+        let wDays = [];
 
-        let days = document.createElement('div');
-        days.classList.add('calendar__content')
-        let week = document.createElement('div');
-
-        let i = 0;
-        // While the last week of the month is not completed (include the next month days)
+        // Construct the calendar days
         while (i % 7 !== 0 || dayN <= currentMonthDays) {
-          // Separate into weeks
-          if (i % 7 === 0) {
-            week = document.createElement('div');
-            week.classList.add('calendar__row');
-            week.setAttribute('week', i / 7);
-          }
-
-          let day = document.createElement('dot-events-calendar-day');
-          day.classList.add('calendar__item');
-
+          let dayCfg = {};
           if (i < (dayOfMonthStart - this.firstDayOfWeek)) {
-            day.classList.add('calendar__item--prevMonth');
-            day.disabled = true;
-            day.date = moment()
-              .year(previousYear)
+            dayCfg.date = moment()
+              .year(previousMonthYear)
               .month(previousMonth)
               .date((previousMonthDays - dayOfMonthStart) + (i + 1 + this.firstDayOfWeek))
               .format();
+            dayCfg.disabled = true;
           } else if (dayN <= currentMonthDays) {
-            day.classList.add('calendar__item--currMonth');
-            day.date = moment()
-              .year(year)
-              .month(month)
-              .date(dayN++)
-              .format();
-
-            // If today
-            if ((dayN - 1) == thisDay && month == thisMonth - 1 && thisYear == year) {
-              day.classList.add('calendar__item--today');
-            }
-            // If selected
-            if ((dayN - 1) == this.date.day && month == this.date.month - 1 && year == this.date.year) {
-              day.selected = true;
-            }
+            dayCfg.date = moment().year(year).month(month).date(dayN++).format();
+            dayCfg.isToday = ((dayN - 1) == thisDay && month == thisMonth - 1 && thisYear == year);
+            dayCfg.isSelected = ((dayN - 1) == this.date.day && month == this.date.month - 1 && year == this.date.year);
           } else {
-            day.classList.add('calendar__item--nextMonth');
-            day.disabled = true;
-            day.date = moment()
-              .year(nextYear)
-              .month(nextMonth)
-              .date(dayOfNextMonth++)
-              .format();
+            dayCfg.date = moment().year(nextMonthYear).month(nextMonth).date(dayOfNextMonth++).format();
+            dayCfg.disabled = true;
           }
-          // Use the function because computed are not initialized yet (not rendered)
-          let formattedDate = day.computeFormattedDate(day.date);
-
-          if (this.eventList[formattedDate] !== undefined) {
-            day.eventList = this.eventList[formattedDate];
-          }
-
-          days.appendChild(week);
-          week.appendChild(day);
+          dayCfg.formattedDate = moment(dayCfg.date).format('YYYY-MM-DD');
+          // dayCfg.eventList = ;
+          wDays.push(dayCfg);
 
           i++;
+
+          // New week
+          if (i % 7 === 0) {
+            mWeeks.push(wDays);
+            wDays = [];
+          }
         }
-        calendarContent.appendChild(days);
-      };
+
+        return mWeeks;
+      }
+
+      /**
+       * Get the label according to the first day of the week
+       * @method
+       * @private
+       */
+      _dayLabelOrdered(index) {
+        return this.dayLabels[(index + this.firstDayOfWeek) % 7];
+      }
 
       /**
        * Get day number for given month
