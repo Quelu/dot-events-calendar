@@ -55,7 +55,12 @@
         <template is="dom-repeat" items="[[_calendar]]" as="week">
           <div class="calendar__row">
             <template is="dom-repeat" items="{{week}}" as="day">
-              <dot-events-calendar-day date="{{day.date}}" disabled="{{day.disabled}}" event-list="{{day.eventList}}" on-date-selected="_handlerChosen"
+              <dot-events-calendar-day
+                date="{{day.date}}"
+                disabled="{{day.disabled}}"
+                event-list="{{day.eventList}}"
+                on-date-selected="_handlerSelected"
+                selected={{day.isSelected}}
                 class="calendar__item">
               </dot-events-calendar-day>
             </template>
@@ -90,10 +95,9 @@
           /**
            * Selected day, format set to 'YYYY-MM-DD'
            */
-          chosen: {
+          selectedDay: {
             type: Object,
-            reflectToAttribute: true,
-            observer: "_handlerChosen"
+            reflectToAttribute: true
           },
           /**
            * Set the first day of the week: Sunday is 0, Monday is 1, etc.
@@ -181,7 +185,7 @@
        * @method
        * @private
        */
-      _handlerChosen(e) {
+      _handlerSelected(e) {
         if(e.detail.eventList)
           console.log(e.detail.eventList);
         let date = new Date(e.detail.date);
@@ -194,13 +198,12 @@
           date: date
         }
 
-        // Deselect others
-        let selection = this.shadowRoot.querySelector('dot-events-calendar-day[selected]');
-        if (selection) {
-          selection.selected = false;
-        }
 
-        target.selected = true;
+        this.dispatchEvent(new CustomEvent('date-selected', {
+          detail: {
+            date: this.date
+          }
+        }));
       }
 
       /**
@@ -209,31 +212,16 @@
        * @private
        */
       _dateChanged(newDate, oldDate) {
-        var date = new Date();
-        var month = parseInt(newDate.month) || 1;
-        var year = parseInt(newDate.year) || date.getFullYear();
-        var day = parseInt(newDate.day) || 1;
-
-        this.date.month = month;
-        this.date.year = year;
-        this.date.day = this.date.day != null ? day : null;
-
         this.currentMonth = this.monthLabels[newDate.month];
 
-        this.dispatchEvent(new CustomEvent('date-selected', {
-          detail: {
-            date: this.date
+        if(!!oldDate) {
+          if (newDate.date.getMonth() > oldDate.date.getMonth()) {
+            this.dispatchEvent(new CustomEvent('next-month'));
           }
-        }));
-
-        // if (!!newDate && !!oldDate) {
-        //   if (newDate.date.getMonth() > oldDate.date.getMonth()) {
-        //     this.dispatchEvent(new CustomEvent('next-month'));
-        //   }
-        //   if (newDate.date.getMonth() < oldDate.date.getMonth()) {
-        //     this.dispatchEvent(new CustomEvent('prev-month'));
-        //   }
-        // }
+          if (newDate.date.getMonth() < oldDate.date.getMonth()) {
+            this.dispatchEvent(new CustomEvent('prev-month'));
+          }
+        }
       }
 
       /**
@@ -243,7 +231,9 @@
       prevMonthHandler() {
         this.date = {
           month: this.date.month == 0 ? 11 : this.date.month - 1,
-          year: this.date.month == 0 ? this.date.year - 1 : this.date.year
+          year: this.date.month == 0 ? this.date.year - 1 : this.date.year,
+          day: this.date.day,
+          date: this.date.date
         };
 
         this.dispatchEvent(new CustomEvent('prev-month'));
@@ -256,7 +246,9 @@
       nextMonthHandler() {
         this.date = {
           month: this.date.month == 11 ? 0 : this.date.month + 1,
-          year: this.date.month == 11 ? this.date.year + 1 : this.date.year
+          year: this.date.month == 11 ? this.date.year + 1 : this.date.year,
+          day: this.date.day,
+          date: this.date.date
         };
 
         this.dispatchEvent(new CustomEvent('next-month'));
@@ -272,7 +264,7 @@
         this.date = {
           date: today,
           day: today.getDate(),
-          month: today.getMonth() + 1,
+          month: today.getMonth(),
           year: today.getFullYear()
         };
       }
@@ -337,8 +329,8 @@
             dayCfg.disabled = true;
           } else if (dayN <= currentMonthDays) {
             dayCfg.date = moment().year(year).month(month).date(dayN++).format();
-            dayCfg.isToday = ((dayN - 1) == thisDay && month == thisMonth - 1 && thisYear == year);
-            dayCfg.isSelected = ((dayN - 1) == this.date.day && month == this.date.month - 1 && year == this.date.year);
+            dayCfg.isToday = ((dayN - 1) == thisDay && month == thisMonth && thisYear == year);
+            dayCfg.isSelected = ((dayN - 1) == this.date.day && month == this.date.month && year == this.date.year);
           } else {
             dayCfg.date = moment().year(nextMonthYear).month(nextMonth).date(dayOfNextMonth++).format();
             dayCfg.disabled = true;
