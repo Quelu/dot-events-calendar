@@ -55,7 +55,11 @@
             name: 'Test3',
             category: 'Supervisor'
           }]
-        }
+        };
+
+        calendar.addEventListener('date-selected', function(e) {
+          console.log(e, e.detail);
+        });
       </script>
     </demo-snippet>
   </div>

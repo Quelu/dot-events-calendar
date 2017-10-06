@@ -59,7 +59,7 @@
                 date="{{day.date}}"
                 disabled="{{day.disabled}}"
                 event-list="{{day.eventList}}"
-                on-date-selected="_handlerSelected"
+                on-day-selected="_handlerSelected"
                 selected={{day.isSelected}}
                 class="calendar__item">
               </dot-events-calendar-day>
@@ -186,8 +186,6 @@
        * @private
        */
       _handlerSelected(e) {
-        if(e.detail.eventList)
-          console.log(e.detail.eventList);
         let date = new Date(e.detail.date);
         let target = e.path.shift();
 
@@ -198,10 +196,10 @@
           date: date
         }
 
-
         this.dispatchEvent(new CustomEvent('date-selected', {
           detail: {
-            date: this.date
+            date: this.date,
+            events: e.detail.eventList
           }
         }));
       }
