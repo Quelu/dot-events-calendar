@@ -27,8 +27,7 @@
         text-align: center;
       }
 
-      .calendar__item--prevMonth,
-      .calendar__item--nextMonth {
+      .calendar__item:disabled {
         background-color: #DDDDDD;
       }
 
@@ -60,7 +59,7 @@
               <dot-events-calendar-day 
                 date="{{day.date}}"
                 disabled="{{day.disabled}}"
-                event-list="{{eventList[day.formattedDate]}}"
+                event-list="{{day.eventList}}"
                 class="calendar__item">
               </dot-events-calendar-day>
             </template>
@@ -164,14 +163,12 @@
            */
           eventList: {
             type: Object,
-            value: {},
-            notify: true,
-            observer: '_onEventListChange'
+            value: {}
           },
 
           _calendar: {
             type: Array,
-            computed: '_computeCalendar(showDate)'
+            computed: '_computeCalendar(showDate, eventList)'
           },
           /**
            * Current month string as locale
@@ -181,36 +178,22 @@
       }
 
       /**
-       *   The `dateSelected` event fired when a date is selected
-       *   @event dateSelected
-       *   @detail {year: String, month: String, day: String, date: String, iso: String}
-       **/
-
-      /**   The `prevMonth` events fired when next month is clicked
-       *   @event prevMonth
-       *   @detail
-       **/
-
-      /**   The `nextMonth` events fired when next month is clicked
-       *   @event nextMonth
-       *   @detail
-       **/
+       * The `dateSelected` event fired when a date is selected
+       * @event dateSelected
+       * @detail {year: String, month: String, day: String, date: String, iso: String}
+       */
 
       /**
-       * Occurs when the event list change
-       * @method
-       * @private
+       * The `prevMonth` events fired when next month is clicked
+       * @event prevMonth
+       * @detail
        */
-      _onEventListChange(value) {
-        if (Object.keys(value).length) {
-          // TODO Update the event-list attribute 
-        }
-      }
 
-      _makeCalendar({
-        s,
-        z
-      }) {}
+      /** 
+       * The `nextMonth` events fired when next month is clicked
+       * @event nextMonth
+       * @detail
+       */
 
       /**
        * Handle the selected day
@@ -321,8 +304,6 @@
           month: today.getMonth() + 1,
           year: today.getFullYear()
         };
-
-        this._makeCalendar(this.showDate.year, this.showDate.month);
       }
 
       /**
@@ -330,10 +311,7 @@
        * @method
        * @private
        */
-      _computeCalendar({
-        year,
-        month
-      }) {
+      _computeCalendar({ year, month }, eventList) {
         const today = new Date();
         const thisDay = today.getDate();
         const thisMonth = today.getMonth() + 1;
@@ -356,13 +334,14 @@
           nextMonthYear++;
         }
 
+        // Get day number for given month
         let previousMonthDays;
         if (month === 0) {
-          previousMonthDays = this._numberOfDays(year, 12);
+          previousMonthDays = new Date(year, 12, 0).getDate();
         } else {
-          previousMonthDays = this._numberOfDays(year, month);
+          previousMonthDays = new Date(year, month, 0).getDate();
         }
-        let currentMonthDays = this._numberOfDays(year, month + 1);
+        let currentMonthDays = new Date(year, month + 1, 0).getDate()
 
         // Define default day variables
         let i = 0;
@@ -374,6 +353,7 @@
         // Construct the calendar days
         while (i % 7 !== 0 || dayN <= currentMonthDays) {
           let dayCfg = {};
+
           if (i < (dayOfMonthStart - this.firstDayOfWeek)) {
             dayCfg.date = moment()
               .year(previousMonthYear)
@@ -389,8 +369,8 @@
             dayCfg.date = moment().year(nextMonthYear).month(nextMonth).date(dayOfNextMonth++).format();
             dayCfg.disabled = true;
           }
-          dayCfg.formattedDate = moment(dayCfg.date).format('YYYY-MM-DD');
-          // dayCfg.eventList = ;
+          dayCfg.eventList = eventList[moment(dayCfg.date).format('YYYY-MM-DD')];
+
           wDays.push(dayCfg);
 
           i++;
@@ -413,16 +393,6 @@
       _dayLabelOrdered(index) {
         return this.dayLabels[(index + this.firstDayOfWeek) % 7];
       }
-
-      /**
-       * Get day number for given month
-       * The month passed in is 1 for January, 2 for February and so on
-       * @method
-       * @private
-       */
-      _numberOfDays(year, month) {
-        return new Date(year, month, 0).getDate();
-      };
     }
 
     window.customElements.define(DotEventsCalendar.is, DotEventsCalendar);
