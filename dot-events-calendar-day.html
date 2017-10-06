@@ -9,6 +9,7 @@
 
       .list {
         text-align: center;
+        height: 5px;
       }
 
       .circle {
@@ -16,7 +17,7 @@
         width: 5px;
         height: 5px;
         border-radius: 50%;
-        margin: 1px;
+        margin: 0 1px;
         background-color: red;
       }
     </style>
@@ -24,10 +25,10 @@
     <p>
       {{ day }}
       <div class="list">
-      </div>
-      <template is="dom-repeat" items="{{eventList}}" as="event">
+        <template is="dom-repeat" items="{{eventList}}" as="event">
           <span class="circle"></span>
-      </template>
+        </template>
+      </div>
     </p>
 
   </template>
@@ -142,27 +143,6 @@
 
       _computeDay(date) {
         return moment(date).format('DD');
-      }
-
-      _getAssigned(item) {
-        if (item.name === '') {
-          return 'pending';
-        }
-        return 'assigned';
-      }
-
-      _hasCounter(eventList) {
-        if (!this.open && eventList.length > 0) {
-          return true;
-        }
-        return false;
-      }
-
-      _getCounter(eventList) {
-        if (!this.open && eventList.length > 0) {
-          return eventList.length;
-        }
-        return "";
       }
 
     }
