@@ -27,11 +27,11 @@
         text-align: center;
       }
 
-      .calendar__item:disabled {
+      .calendar__item[disabled] {
         background-color: #DDDDDD;
       }
 
-      .selected {
+      .calendar__item[selected] {
         background-color: #666666;
         color: white;
       }
@@ -39,12 +39,11 @@
       iron-icon {
         cursor: pointer;
       }
-
     </style>
     <div id="calendar" class="calendar">
       <div class="calendar__header">
         <iron-icon id="prevMonth" class="button" on-click="prevMonthHandler" icon="chevron-left"></iron-icon>
-        <span>{{currentMonth}} {{showDate.year}}</span>
+        <span>{{currentMonth}} {{date.year}}</span>
         <iron-icon id="nextMonth" class="button" on-click="nextMonthHandler" icon="chevron-right"></iron-icon>
       </div>
       <div class="calendar__content" id="calendarContent">
@@ -56,10 +55,7 @@
         <template is="dom-repeat" items="[[_calendar]]" as="week">
           <div class="calendar__row">
             <template is="dom-repeat" items="{{week}}" as="day">
-              <dot-events-calendar-day 
-                date="{{day.date}}"
-                disabled="{{day.disabled}}"
-                event-list="{{day.eventList}}"
+              <dot-events-calendar-day date="{{day.date}}" disabled="{{day.disabled}}" event-list="{{day.eventList}}" on-date-selected="_handlerChosen"
                 class="calendar__item">
               </dot-events-calendar-day>
             </template>
@@ -127,32 +123,16 @@
             }
           },
           /**
-           * Internal property that holds the current month and year displayed.
-           */
-          showDate: {
-            type: Object,
-            value: function () {
-              var d = new Date();
-              return {
-                year: d.getFullYear(),
-                month: d.getMonth() + 1,
-                day: null,
-                date: d
-              }
-            },
-            readonly: true
-          },
-          /**
            * The currently selected date.
            */
           date: {
             type: Object,
             value: function () {
-              var d = new Date();
+              let d = new Date();
               return {
                 year: d.getFullYear(),
-                month: d.getMonth() + 1,
-                day: null,
+                month: d.getMonth(),
+                day: d.getDate(),
                 date: d
               }
             },
@@ -168,7 +148,7 @@
 
           _calendar: {
             type: Array,
-            computed: '_computeCalendar(showDate, eventList)'
+            computed: '_computeCalendar(date, eventList)'
           },
           /**
            * Current month string as locale
@@ -189,11 +169,12 @@
        * @detail
        */
 
-      /** 
+      /**
        * The `nextMonth` events fired when next month is clicked
        * @event nextMonth
        * @detail
        */
+
 
       /**
        * Handle the selected day
@@ -201,23 +182,25 @@
        * @private
        */
       _handlerChosen(e) {
-        let selection = this.$.calendarContent.querySelector('dot-events-calendar-day[selected]');
+        if(e.detail.eventList)
+          console.log(e.detail.eventList);
+        let date = new Date(e.detail.date);
+        let target = e.path.shift();
+
+        this.date = {
+          year: date.getFullYear(),
+          month: date.getMonth(),
+          day: date.getDate(),
+          date: date
+        }
+
+        // Deselect others
+        let selection = this.shadowRoot.querySelector('dot-events-calendar-day[selected]');
         if (selection) {
           selection.selected = false;
         }
-        if (e == "" || e == null) {
-          this.chosen = "";
-        } else {
-          this.chosen = e;
 
-          let days = this.$.calendarContent.querySelectorAll('dot-events-calendar-day');
-
-          days.forEach((e, i) => {
-            if (this.chosen == e.getAttribute('data-date')) {
-              e.selected = true;
-            }
-          });
-        }
+        target.selected = true;
       }
 
       /**
@@ -235,12 +218,7 @@
         this.date.year = year;
         this.date.day = this.date.day != null ? day : null;
 
-        this.showDate = {
-          month: month - 1,
-          year: year
-        };
-
-        this.currentMonth = this.monthLabels[this.showDate.month];
+        this.currentMonth = this.monthLabels[newDate.month];
 
         this.dispatchEvent(new CustomEvent('date-selected', {
           detail: {
@@ -248,30 +226,26 @@
           }
         }));
 
-        if (!!newDate && !!oldDate) {
-          if (newDate.date.getMonth() > oldDate.date.getMonth()) {
-            this.dispatchEvent(new CustomEvent('next-month'));
-          }
-          if (newDate.date.getMonth() < oldDate.date.getMonth()) {
-            this.dispatchEvent(new CustomEvent('prev-month'));
-          }
-        }
+        // if (!!newDate && !!oldDate) {
+        //   if (newDate.date.getMonth() > oldDate.date.getMonth()) {
+        //     this.dispatchEvent(new CustomEvent('next-month'));
+        //   }
+        //   if (newDate.date.getMonth() < oldDate.date.getMonth()) {
+        //     this.dispatchEvent(new CustomEvent('prev-month'));
+        //   }
+        // }
       }
-
 
       /**
        * Move to the previous month.
        * @method
        */
       prevMonthHandler() {
-        this.showDate = {
-          month: this.showDate.month == 0 ? 11 : this.showDate.month - 1,
-          year: this.showDate.month == 0 ? this.showDate.year - 1 : this.showDate.year
+        this.date = {
+          month: this.date.month == 0 ? 11 : this.date.month - 1,
+          year: this.date.month == 0 ? this.date.year - 1 : this.date.year
         };
 
-        this.chosen = "";
-
-        this.currentMonth = this.monthLabels[this.showDate.month];
         this.dispatchEvent(new CustomEvent('prev-month'));
       }
 
@@ -280,14 +254,11 @@
        * @method
        */
       nextMonthHandler() {
-        this.showDate = {
-          month: this.showDate.month == 11 ? 0 : this.showDate.month + 1,
-          year: this.showDate.month == 11 ? this.showDate.year + 1 : this.showDate.year
+        this.date = {
+          month: this.date.month == 11 ? 0 : this.date.month + 1,
+          year: this.date.month == 11 ? this.date.year + 1 : this.date.year
         };
 
-        this.chosen = "";
-
-        this.currentMonth = this.monthLabels[this.showDate.month];
         this.dispatchEvent(new CustomEvent('next-month'));
       }
 
@@ -311,7 +282,10 @@
        * @method
        * @private
        */
-      _computeCalendar({ year, month }, eventList) {
+      _computeCalendar({
+        year,
+        month
+      }, eventList) {
         const today = new Date();
         const thisDay = today.getDate();
         const thisMonth = today.getMonth() + 1;
@@ -396,6 +370,5 @@
     }
 
     window.customElements.define(DotEventsCalendar.is, DotEventsCalendar);
-
   </script>
 </dom-module>

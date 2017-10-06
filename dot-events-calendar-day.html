@@ -61,7 +61,8 @@
            */
           selected: {
             type: Boolean,
-            value: false
+            value: false,
+            reflectToAttribute: true
           },
 
           /**
@@ -79,7 +80,7 @@
           date: {
             type: String,
             value: function () {
-              return moment().format();
+              return new Date();
             },
             reflectToAttribute: true
           },
@@ -110,27 +111,21 @@
         };
       }
 
-      /**
-       * Instance of the element is created/upgraded. Use: initializing state,
-       * set up event listeners, create shadow dom.
-       * @constructor
-       */
-      constructor() {
-        super();
-      }
-
       ready() {
         super.ready();
 
         Polymer.RenderStatus.afterNextRender(this, function () {
-          this.addEventListener('tap', this._onDayClicked.bind(this));
+          this.addEventListener('click', this._onDayClicked);
         });
       }
 
       _onDayClicked() {
-        this.fire('date-selected', {
-          date: this.date
-        });
+        this.dispatchEvent(new CustomEvent('date-selected', {
+          detail: {
+            date: this.date,
+            eventList: this.eventList
+          }
+        }))
       }
 
       _computeFormattedDate(date) {
