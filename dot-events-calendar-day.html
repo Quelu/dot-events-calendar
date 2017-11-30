@@ -65,11 +65,13 @@
         {{ day }}
       </div>
     </div>
-    <div class="events">
-      <template is="dom-repeat" items="{{eventList}}" as="event">
-        <div class="event"></div>
-      </template>
-    </div>
+    <template is="dom-if" if="{{!disabled}}">
+      <div class="events">
+        <template is="dom-repeat" items="{{eventList}}" as="event">
+          <div class="event"></div>
+        </template>
+      </div>
+    </template>
   </template>
 
   <script>

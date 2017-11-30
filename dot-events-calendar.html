@@ -58,6 +58,7 @@
       iron-icon {
         cursor: pointer;
       }
+
     </style>
     <div id="calendar" class="calendar">
       <template is="dom-if" if="[[!noHeader]]">
@@ -73,20 +74,22 @@
             <div class="calendar__item calendar__day-label">[[_dayLabelOrdered(index)]]</div>
           </template>
         </div>
-        <template is="dom-repeat" items="[[_calendar]]" as="week">
-          <div class="calendar__row">
-            <template is="dom-repeat" items="{{week}}" as="day">
-              <dot-events-calendar-day
-                date="{{day.date}}"
-                disabled="{{day.disabled}}"
-                event-list="{{day.eventList}}"
-                on-day-selected="_handlerSelected"
-                selected={{day.isSelected}}
-                class="calendar__item">
-              </dot-events-calendar-day>
-            </template>
-          </div>
-        </template>
+        <div id="calendarDates">
+          <template is="dom-repeat" items="[[_calendar]]" as="week">
+            <div class="calendar__row">
+              <template is="dom-repeat" items="{{week}}" as="day">
+                <dot-events-calendar-day
+                  date="{{day.date}}"
+                  disabled="{{day.disabled}}"
+                  event-list="{{day.eventList}}"
+                  on-day-selected="_handlerSelected"
+                  selected={{day.isSelected}}
+                  class="calendar__item">
+                </dot-events-calendar-day>
+              </template>
+            </div>
+          </template>
+        </div>
       </div>
     </div>
   </template>
@@ -185,9 +188,16 @@
           /**
            * Current month string as locale
            */
-           currentMonth: {
+          currentMonth: {
             type: String,
             reflectToAttribute: true
+          },
+          /**
+           * Duration of the month transition
+           */
+          animationDuration: {
+            type: Number,
+            value: 250
           }
         };
       }
@@ -217,15 +227,7 @@
        * @private
        */
       _handlerSelected(e) {
-        let date = new Date(e.detail.date);
-        let target = e.path.shift();
-
-        this.date = {
-          year: date.getFullYear(),
-          month: date.getMonth(),
-          day: date.getDate(),
-          date: date
-        }
+        this.__updateDate(new Date(e.detail.date), this.date);
 
         this.dispatchEvent(new CustomEvent('date-selected', {
           detail: {
@@ -236,21 +238,80 @@
       }
 
       /**
+       * Check if there is a month change when updating the date
+       * @method
+       * @private
+       */
+      __updateDate(newDate, oldDate) {
+        if (newDate.getMonth() !== oldDate.date.getMonth()) {
+          let direction;
+          if (newDate.getMonth() > oldDate.date.getMonth()) {
+            direction = 'next';
+          }
+          if (newDate.getMonth() < oldDate.date.getMonth()) {
+            direction = 'prev';
+          }
+
+          this.__changeMonth(direction).then(() => {
+            this.date = {
+              year: newDate.getFullYear(),
+              month: newDate.getMonth(),
+              day: newDate.getDate(),
+              date: newDate
+            }
+          });
+        } else {
+          this.date = {
+            year: newDate.getFullYear(),
+            month: newDate.getMonth(),
+            day: newDate.getDate(),
+            date: newDate
+          }
+        }
+      }
+
+      /**
        * Switch to the right calendar page, based on the set date.
        * @method
        * @private
        */
       _dateChanged(newDate, oldDate) {
         this.currentMonth = this.monthLabels[newDate.month];
+      }
 
-        if(!!oldDate) {
-          if (newDate.date.getMonth() > oldDate.date.getMonth()) {
-            this.dispatchEvent(new CustomEvent('next-month'));
-          }
-          if (newDate.date.getMonth() < oldDate.date.getMonth()) {
-            this.dispatchEvent(new CustomEvent('prev-month'));
-          }
-        }
+      /**
+       * Launch the month transition animation
+       * @method
+       * @private
+       */
+      __changeMonth(direction) {
+        return new Promise((resolve) => {
+
+          this.$.calendarDates.animate([{
+            transform: 'translate3D(0, 0, 0)',
+            opacity: 1
+          }, {
+            transform: 'translate3D(' + (direction === 'prev' ? '' : '-') + '20%, 0, 0)',
+            opacity: 0,
+            offset: 0.49
+          }, {
+            transform: 'translate3D(' + (direction === 'prev' ? '-' : '') + '20%, 0, 0)',
+            opacity: 0,
+            offset: 0.51
+          }, {
+            transform: 'translate3D(0, 0, 0)',
+            opacity: 1
+          }], {
+            easing: 'cubic-bezier(0.4, 0.0, 0.2, 1)',
+            duration: this.animationDuration
+          });
+
+          this.dispatchEvent(new CustomEvent(direction + '-month'));
+
+          setTimeout(() => {
+            resolve();
+          }, this.animationDuration / 2);
+        })
       }
 
       /**
@@ -258,14 +319,14 @@
        * @method
        */
       prevMonthHandler() {
-        this.date = {
-          month: this.date.month == 0 ? 11 : this.date.month - 1,
-          year: this.date.month == 0 ? this.date.year - 1 : this.date.year,
-          day: this.date.day,
-          date: this.date.date
-        };
-
-        this.dispatchEvent(new CustomEvent('prev-month'));
+        this.__changeMonth('prev').then(() => {
+          this.date = {
+            month: this.date.month == 0 ? 11 : this.date.month - 1,
+            year: this.date.month == 0 ? this.date.year - 1 : this.date.year,
+            day: this.date.day,
+            date: this.date.date
+          };
+        })
       }
 
       /**
@@ -273,14 +334,14 @@
        * @method
        */
       nextMonthHandler() {
-        this.date = {
-          month: this.date.month == 11 ? 0 : this.date.month + 1,
-          year: this.date.month == 11 ? this.date.year + 1 : this.date.year,
-          day: this.date.day,
-          date: this.date.date
-        };
-
-        this.dispatchEvent(new CustomEvent('next-month'));
+        this.__changeMonth('next').then(() => {
+          this.date = {
+            month: this.date.month == 11 ? 0 : this.date.month + 1,
+            year: this.date.month == 11 ? this.date.year + 1 : this.date.year,
+            day: this.date.day,
+            date: this.date.date
+          };
+        })
       }
 
       /**
@@ -391,5 +452,6 @@
     }
 
     window.customElements.define(DotEventsCalendar.is, DotEventsCalendar);
+
   </script>
 </dom-module>
