@@ -35,12 +35,12 @@
 
       .calendar__row {
         @apply --layout-horizontal;
-        @apply --dot-events-calendar-row;        
+        @apply --dot-events-calendar-row;
       }
 
       .calendar__item {
         @apply --layout-flex;
-        @apply --dot-events-calendar-item;        
+        @apply --dot-events-calendar-item;
       }
 
       .calendar__day-label {
@@ -60,11 +60,13 @@
       }
     </style>
     <div id="calendar" class="calendar">
-      <div class="calendar__header">
-        <iron-icon id="prevMonth" class="button" on-click="prevMonthHandler" icon="chevron-left"></iron-icon>
-        <span>{{currentMonth}} {{date.year}}</span>
-        <iron-icon id="nextMonth" class="button" on-click="nextMonthHandler" icon="chevron-right"></iron-icon>
-      </div>
+      <template is="dom-if" if="[[!noHeader]]">
+        <div class="calendar__header">
+          <iron-icon id="prevMonth" class="button" on-click="prevMonthHandler" icon="chevron-left"></iron-icon>
+          <span>{{currentMonth}} {{date.year}}</span>
+          <iron-icon id="nextMonth" class="button" on-click="nextMonthHandler" icon="chevron-right"></iron-icon>
+        </div>
+      </template>
       <div class="calendar__content" id="calendarContent">
         <div class="calendar__row">
           <template is="dom-repeat" items="{{dayLabels}}" as="dayLabel">
@@ -167,6 +169,13 @@
           eventList: {
             type: Object,
             value: {}
+          },
+          /**
+           * Header toggler
+           */
+          noHeader: {
+            type: Boolean,
+            value: false
           },
 
           _calendar: {
