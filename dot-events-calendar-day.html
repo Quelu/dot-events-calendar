@@ -1,36 +1,73 @@
 <link rel="import" href="../polymer/polymer-element.html">
+<link rel="import" href="../iron-flex-layout/iron-flex-layout.html">
+<link rel="import" href="../paper-ripple/paper-ripple.html">
 
 <dom-module id="dot-events-calendar-day">
   <template>
     <style>
-      :host {
-        display: block
+       :host {
+        display: block;
       }
 
-      .list {
-        text-align: center;
-        height: 5px;
-      }
-
-      .circle {
-        display: inline-block;
-        width: 5px;
-        height: 5px;
+      .day {
+        position: relative;
+        width: 40%;
+        min-width: 1.875em;
+        margin: 5% auto;
         border-radius: 50%;
-        margin: 0 1px;
+
+        transition: all 250ms cubic-bezier(0.4, 0.0, 0.2, 1);
+      }
+
+      .day::after {
+        content: "";
+        display: block;
+        padding-bottom: 100%;
+      }
+
+      .content {
+        position: absolute;
+        top: 0;
+        left: 0;
+        bottom: 0;
+        right: 0;
+
+        @apply --layout-vertical;
+        @apply --layout-center-center;
+      }
+
+      .selected {
+        background-color: #666666;
+        color: white;
+      }
+
+      .events {
+        width: 100%;
+        height: .438em;
+        @apply --layout-horizontal;
+        @apply --layout-center-center;
+      }
+
+      .event {
+        width: .438em;
+        height: 100%;
+        margin: 0 .063em;
+        border-radius: 50%;
         background-color: red;
       }
     </style>
 
-    <p>
-      {{ day }}
-      <div class="list">
-        <template is="dom-repeat" items="{{eventList}}" as="event">
-          <span class="circle"></span>
-        </template>
+    <div class$="day [[__computeIsSelected(selected)]]">
+      <paper-ripple center noink=[[disabled]]></paper-ripple>
+      <div class="content">
+        {{ day }}
       </div>
-    </p>
-
+    </div>
+    <div class="events">
+      <template is="dom-repeat" items="{{eventList}}" as="event">
+        <div class="event"></div>
+      </template>
+    </div>
   </template>
 
   <script>
@@ -111,6 +148,10 @@
         };
       }
 
+      __computeIsSelected(selected) {
+        return selected ? "selected" : "";
+      }
+
       ready() {
         super.ready();
 
@@ -143,6 +184,5 @@
     }
 
     window.customElements.define(DotEventsCalendarDay.is, DotEventsCalendarDay);
-
   </script>
 </dom-module>
