@@ -10,23 +10,49 @@
     <style>
        :host {
         display: block;
+
+        --dot-events-calendar-text-color: #000;
+
+        --dot-events-calendar-disabled-day-background-color: #DDDDDD;
+        --disabled-day-color: var(--primary-text-color);
+
+        --dot-events-calendar-selected-day-background-color: #666;
+        --dot-events-calendar-selected-day-color: #fff;
+
+        color: var(--dot-events-calendar-text-color);
       }
 
       .calendar__header {
         @apply --layout-horizontal;
         @apply --layout-justified;
+
+        @apply --dot-events-calendar-header;
+      }
+
+      .calendar__content {
+        @apply --dot-events-calendar-content;
       }
 
       .calendar__row {
         @apply --layout-horizontal;
+        @apply --dot-events-calendar-row;        
       }
 
       .calendar__item {
         @apply --layout-flex;
+        @apply --dot-events-calendar-item;        
+      }
+
+      .calendar__day-label {
+        text-align: center;
+        @apply --dot-events-calendar-day-label;
       }
 
       .calendar__item[disabled] {
-        background-color: #DDDDDD;
+        background-color: var(--dot-events-calendar-disabled-day-background-color);
+        color: var(--dot-events-calendar-disabled-day-color);
+
+        @apply --dot-events-calendar-disabled-day;
       }
 
       iron-icon {
@@ -42,7 +68,7 @@
       <div class="calendar__content" id="calendarContent">
         <div class="calendar__row">
           <template is="dom-repeat" items="{{dayLabels}}" as="dayLabel">
-            <div class="calendar__item">[[_dayLabelOrdered(index)]]</div>
+            <div class="calendar__item calendar__day-label">[[_dayLabelOrdered(index)]]</div>
           </template>
         </div>
         <template is="dom-repeat" items="[[_calendar]]" as="week">
